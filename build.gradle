@@ -1,0 +1,60 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    implementation platform('software.amazon.awssdk:bom:2.15.0')
+
+    implementation 'software.amazon.awssdk:secretsmanager'
+    implementation 'software.amazon.awssdk:s3'
+
+
+    //apache commons csv to read csv files
+    compile 'org.apache.commons:commons-csv:1.8'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.7.0'
+
+    api (
+        'com.amazonaws:aws-lambda-java-core:1.2.1',
+        'com.amazonaws:aws-lambda-java-log4j:1.0.1',
+        'com.fasterxml.jackson.core:jackson-core:2.11.0',
+        'com.fasterxml.jackson.core:jackson-databind:2.11.0',
+        'com.fasterxml.jackson.core:jackson-annotations:2.11.0'
+    )
+    //junit for testin
+    testImplementation(platform('org.junit:junit-bom:5.7.0'))
+	testImplementation('org.junit.jupiter:junit-jupiter')
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+}
+
+// Task for building the zip file for upload
+task buildZip(type: Zip) {
+    // Using the Zip API from gradle to build a zip file of all the dependencies
+    //
+    // The path to this zip file can be set in the serverless.yml file for the
+    // package/artifact setting for deployment to the S3 bucket
+    //
+    // Link: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+
+    // set the base name of the zip file
+    archiveBaseName = "hello"
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+build.dependsOn buildZip

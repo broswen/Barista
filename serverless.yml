@@ -1,0 +1,59 @@
+service: barista
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: java11
+
+  stage: dev
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - s3:ListBucket
+        - s3:GetObject
+        - s3:PutObject
+      Resource:
+        - !GetAtt UploadBucket.Arn
+        - !Join ["/", [!GetAtt UploadBucket.Arn, "*"]]
+    - Effect: "Allow"
+      Action:
+        - secretsmanager:GetSecretValue
+        - secretsmanager:GetResourcePolicy
+        - secretsmanager:DescribeSecret
+        - secretsmanager:ListSecretVersionIds
+      Resource:
+        - !Ref TestSecret
+
+# you can define service wide environment variables here
+  environment:
+    UPLOAD_BUCKET: !Ref UploadBucket #bucket name
+    SECRET: !Ref TestSecret
+
+# you can add packaging information here
+package:
+  artifact: build/distributions/hello.zip
+
+functions:
+  Convert:
+    handler: com.broswen.Handler
+    events:
+      - s3: 
+          bucket: !Ref UploadBucket
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .csv
+          existing: true
+
+resources:
+  Resources:
+    UploadBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: barista-upload-bucket
+    
+    TestSecret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: BaristaTestSecret
+        SecretString: '{"username":"secretusername","password":"secretpassword"}'
