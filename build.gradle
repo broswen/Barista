@@ -17,7 +17,7 @@ dependencies {
 
 
     //apache commons csv to read csv files
-    compile 'org.apache.commons:commons-csv:1.8'
+    implementation 'org.apache.commons:commons-csv:1.8'
     implementation 'com.amazonaws:aws-lambda-java-events:3.7.0'
 
     api (
